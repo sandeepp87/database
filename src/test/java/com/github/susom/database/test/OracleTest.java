@@ -17,8 +17,6 @@
 package com.github.susom.database.test;
 
 import java.io.FileReader;
-import java.lang.reflect.Method;
-import java.sql.Connection;
 import java.util.Properties;
 
 import org.junit.Ignore;
@@ -26,9 +24,6 @@ import org.junit.Test;
 
 import com.github.susom.database.DatabaseProvider;
 import com.github.susom.database.OptionsOverride;
-
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Exercise Database functionality with a real Oracle database.

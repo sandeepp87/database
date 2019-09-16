@@ -28,9 +28,6 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-/*>>>
-import org.checkerframework.checker.tainting.qual.Untainted;
-*/
 
 /**
  * Primary class for accessing a relational (SQL) database.
