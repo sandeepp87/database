@@ -215,15 +215,19 @@ public class DatabaseImpl implements Database {
       Method method = connection.getClass().getMethod("getSchema");
       if (method != null) {
         schemaName = (String) method.invoke(connection);
-      } else if ("oracle".equals(this.flavor().toString())) {
+
+      } else if (flavor() == Flavor.oracle) {
         // Oracle defaults to user name schema - use that.
         log.warn("Connection getSchema API was not found.  Defaulting to Oracle user name schema." +
           "If this is not appropriate, please use tableExists(tableName, schemaName) API or upgrade to ojdbc7 or later");
-        schemaName  = connection.getMetaData().getUserName();
-      } else {
-        // connection.getSchema API was supported starting at JDK1.7.  Method should not be null.
-        throw new NullPointerException("Connection getSchema method is null.");
+        schemaName = connection.getMetaData().getUserName();
       }
+
+      if (schemaName == null) {
+        // connection.getSchema API was supported starting at JDK1.7.  Method should not be null.
+        throw new NullPointerException("Unable to retrieve schema name.");
+      }
+
     } catch (Exception exc) {
       throw new DatabaseException("Unable to determine the schema. " +
         "Please use tableExists(tableName, schemaName API) or upgrade to a JDBC7 driver or later.", exc);
