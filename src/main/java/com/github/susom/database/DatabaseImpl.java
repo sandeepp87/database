@@ -16,6 +16,7 @@
 
 package com.github.susom.database;
 
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -206,14 +207,29 @@ public class DatabaseImpl implements Database {
 
   @Override
   public boolean tableExists(@Nonnull String tableName) throws DatabaseException {
+
+    String schemaName = null;
     try {
-      return tableExists( tableName,
-        connection.getSchema());    // use default schema
-    } catch (SQLException exc) {
-      throw new DatabaseException("Unable to look up table " + tableName +
-        " with default db connection schema & catalog: " + exc.getMessage(),
-        exc);
+      // Use reflections to see if connection.getSchema API exists. It should exist for any JDBC7 or later implementation
+      // We still support Oracle 11 with odbc6, however, so we can't assume it's there.
+      Method method = connection.getClass().getMethod("getSchema");
+      if (method != null) {
+        schemaName = (String) method.invoke(connection);
+      } else if ("oracle".equals(this.flavor().toString())) {
+        // Oracle defaults to user name schema - use that.
+        log.warn("Connection getSchema API was not found.  Defaulting to Oracle user name schema." +
+          "If this is not appropriate, please use tableExists(tableName, schemaName) API or upgrade to ojdbc7 or later");
+        schemaName  = connection.getMetaData().getUserName();
+      } else {
+        // connection.getSchema API was supported starting at JDK1.7.  Method should not be null.
+        throw new NullPointerException("Connection getSchema method is null.");
+      }
+    } catch (Exception exc) {
+      throw new DatabaseException("Unable to determine the schema. " +
+        "Please use tableExists(tableName, schemaName API) or upgrade to a JDBC7 driver or later.", exc);
     }
+
+    return tableExists( tableName, schemaName);
   }
 
   @Override
