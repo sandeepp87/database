@@ -209,12 +209,19 @@ public class DatabaseImpl implements Database {
   public boolean tableExists(@Nonnull String tableName) throws DatabaseException {
 
     String schemaName = null;
+    Method getSchema = null;
+
     try {
       // Use reflections to see if connection.getSchema API exists. It should exist for any JDBC7 or later implementation
       // We still support Oracle 11 with odbc6, however, so we can't assume it's there.
-      Method method = connection.getClass().getMethod("getSchema");
-      if (method != null) {
-        schemaName = (String) method.invoke(connection);
+      getSchema = connection.getClass().getDeclaredMethod("getSchema", new Class[0]);
+    } catch (NoSuchMethodException noMethodExc) {
+      // Expected if method does not exist - just let it go
+    }
+
+    try {
+      if (getSchema != null) {
+        schemaName = ((String) getSchema.invoke(connection, new Object[0]));
 
       } else if (flavor() == Flavor.oracle) {
         // Oracle defaults to user name schema - use that.
@@ -233,8 +240,9 @@ public class DatabaseImpl implements Database {
         "Please use tableExists(tableName, schemaName API) or upgrade to a JDBC7 driver or later.", exc);
     }
 
-    return tableExists( tableName, schemaName);
+    return tableExists(tableName, schemaName);
   }
+
 
   @Override
   public boolean tableExists(@Nonnull String tableName, String schemaName) throws DatabaseException {

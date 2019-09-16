@@ -52,36 +52,6 @@ public class OracleTest extends CommonTest {
     ).withSqlParameterLogging().withSqlInExceptionMessages().withOptions(options).create();
   }
 
-  @Test
-  public void tableExists() {
-
-    // Use reflections to see if connection.getSchema API exists. It should exist for any JDBC7 or later implementation
-    // We still support Oracle 11 with odbc6, however, so we can't assume it's there.
-    Method method = null;
-    try {
-      method = Connection.class.getMethod("getSchema");
-    } catch (NoSuchMethodException noMethodExc) {
-      // Ignore - this could happen with an early driver like ojdbc6
-    }
-
-    if (method == null) {
-      // Got a driver that does not support getSchema API (Oracle 11 or earlier) so
-      // No way to know for sure what the schema is.  Just verify we get what we expect - an exception
-      // with a helpful message
-      try {
-        db.tableExists(TEST_TABLE_NAME);
-        fail("Expected an exception since unable to determine the schema!");
-      } catch (Exception exc) {
-        assertTrue(exc.getMessage().contains("Unable to determine the schema. " +
-          "Please use tableExists(tableName, schemaName API) or upgrade to a JDBC7 driver or later."));
-      }
-    } else {
-      // Got a driver that should support connection getSchema API (Oracle 12 and later)
-      // so run the regular tests
-      super.tableExists();
-    }
-  }
-
   @Ignore("Current Oracle behavior is to convert -0f to 0f")
   @Test
   public void argFloatNegativeZero() {
